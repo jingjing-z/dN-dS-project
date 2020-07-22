@@ -4,11 +4,6 @@ functions {
 	  matrix[61,61] M;
 	  
 	  M = rep_matrix(0.,61,61);
-	  r1 = row_vector[2]
-	  r1 = [1,1,1]
-	  c1 = row_vector[2]
-	  c1 = [3,4,9]
-	  M[r1, c1]  = omega*mu
 	  
     M[1,2] = kappa*mu;
     M[1,3] = omega*mu;
