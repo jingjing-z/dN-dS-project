@@ -8,19 +8,7 @@ require(tidyverse, warn.conflicts=FALSE, quietly=TRUE)
 
 library(KScorrect) # for log uniform distribution
 
-######
-## data
-data <- read.fasta("porB3.carriage.noindels.txt")
-seqs <- transcribe(data)
-#tri <- translate(seqs)
-tripletNames_noSTO <- tripletNames[-c(11, 12, 15)]
 
-count <- as.data.frame(table(seqs))
-order <- match(tripletNames_noSTO, count$seqs)
-x <- count$Freq[order]
-x[is.na(x)] <- 0
-n <- sum(x)
-pi <- rep(0.0163934426229508, 61)
 
 #####
 ## Read a FASTA file
@@ -137,13 +125,27 @@ read.fasta.ref.contig = function(ref_file) {
   return(contig)
 }
 
+######
+## data
+data <- read.fasta("porB3.carriage.noindels.txt")
+seqs <- transcribe(data)
+#tri <- translate(seqs)
+tripletNames_noSTO <- tripletNames[-c(11, 12, 15)]
+
+count <- as.data.frame(table(seqs))
+order <- match(tripletNames_noSTO, count$seqs)
+x <- count$Freq[order]
+x[is.na(x)] <- 0
+n <- sum(x)
+pi <- rep(0.0163934426229508, 61)
+
 #####
 warmup  <- 1e3
 iter    <- 10e3
 
 file.stanmodel  <- file.path('likelihood.stan')
 fit     <- stan(    file.stanmodel, 
-                    data=list(x=x,n=n), 
+                    data=list(x=x,n=n,pi=pi), 
                     warmup=warmup, 
                     iter=iter, 
                     chains=2,

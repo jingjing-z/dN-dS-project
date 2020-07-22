@@ -306,14 +306,6 @@ transformed parameters {
   V = eigenvectors_sym(mutmat);
   D = diag_matrix(eigenvalues_sym(mutmat));
   
-  for (i in 1:61){
-    for (j in 1:61){
-      if (V[i,j] <= 0){
-        V[i,j] = 1e-6;
-      }
-    }
-  }
-  
 }
 
 
@@ -346,7 +338,13 @@ model {
       for (k in 1:61){
         m_Ai += (V[A,k]*(V[k,i])^(-1))/(1-D[k,k]);
         m_AA += (V[A,k]*(V[k,A])^(-1))/(1-D[k,k]);
-       
+      }
+      
+      if (m_Ai < 1e-6) {
+        m_Ai = 1e-6;
+      }
+      if (m_AA < 1e-6) {
+        m_Ai = 1e-6;
       }
       //print("m_Ai[", i, "] = ", m_Ai);
       //print("m_AA[", i, "] = ", m_AA);
