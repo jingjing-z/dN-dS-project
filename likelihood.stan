@@ -2,8 +2,6 @@ functions {
   // substitution rate matrix
 	matrix PDRM(real mu, real kappa, real omega) {
 	  matrix[61,61] M;
-	  vector[61] row_sum;
-	  vector[61] diag_M = diagonal(M);
 	  
 	  M = rep_matrix(0.,61,61);
     M[1,2] = kappa*mu;
@@ -271,27 +269,15 @@ functions {
     M[60,61] = kappa*mu;
     
     // Fill in the lower triangle
-    for (i in 1:61){
-      for (j in 1:61){
-        if (M[i,j] != 0){
-          M[j,i] = M[i,j];
-        }
-      }
-    }
+    M = M'+ M;
   
     // Compute the diagonal
     for (i in 1:61){
-      row_sum[i] = 0;
-      for (j in 1:61){
-        row_sum[i] += M[i,j];
-      }
+      M[i, i] = sum(row(M, i));
     }
-    diag_M = row_sum;
     
     return(M);
   }
-  
-  
   
 }
 
@@ -319,8 +305,17 @@ transformed parameters {
   mutmat = PDRM(mu, kappa, omega);
   V = eigenvectors_sym(mutmat);
   D = diag_matrix(eigenvalues_sym(mutmat));
-	
+  
+  for (i in 1:61){
+    for (j in 1:61){
+      if (V[i,j] <= 0){
+        V[i,j] = 1e-6;
+      }
+    }
+  }
+  
 }
+
 
 
 model {
@@ -330,7 +325,6 @@ model {
   real lik;
   real m_Ai;
   real m_AA;
-  real W;
   
   // priors
   target += lognormal_lpdf( kappa | 1, 1.25 );
@@ -352,22 +346,22 @@ model {
       for (k in 1:61){
         m_Ai += (V[A,k]*(V[k,i])^(-1))/(1-D[k,k]);
         m_AA += (V[A,k]*(V[k,A])^(-1))/(1-D[k,k]);
+       
       }
-    
+      //print("m_Ai[", i, "] = ", m_Ai);
+      //print("m_AA[", i, "] = ", m_AA);
+      
       if (A == i){
-        alpha_Ai[A,i] = 0;
-        W = lgamma(x[i]+alpha_Ai[A,i]+1) - lgamma(alpha_Ai[A,i]+1) - lgamma(x[i]+1);
+        alpha_Ai[A,i] = 1;
       }
       else{
         alpha_Ai[A,i] = m_Ai/m_AA;
-        lik += lgamma(x[i]+alpha_Ai[A,i]) - lgamma(alpha_Ai[A,i]) - lgamma(x[i]+1);
       }
+      lik += lgamma(x[i]+alpha_Ai[A,i]) - lgamma(alpha_Ai[A,i]) - lgamma(x[i]+1);
     }
   
     alpha_A[A] = sum(alpha_Ai[A,]);
-    lik_full[A] = lik + W + lgamma(alpha_A[A]) - lgamma(n+alpha_A[A]) + lgamma(n+1); 
-    target += pi*lik_full[A];
+    lik_full[A] = lik + lgamma(alpha_A[A]) - lgamma(n+alpha_A[A]) + lgamma(n+1); 
   }
-  
+  target += log_sum_exp(lik_full + log(pi));
 }
-
