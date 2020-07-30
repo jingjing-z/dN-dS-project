@@ -302,14 +302,14 @@ transformed parameters {
   matrix[61,61] mutmat;
   matrix[61,61] V; //eigenvectors
   matrix[61,61] Vinv;
-  vector[61] D; //eigenvalues transformed to -> 1/1-Dkk
+  row_vector[61] D; //eigenvalues transformed to -> 1/1-Dkk
   
   mutmat = PDRM(mu, kappa, omega);
   V = eigenvectors_sym(mutmat);
-  D = 1 / (1-eigenvalues_sym(mutmat));
+  D = to_row_vector(inv(1-eigenvalues_sym(mutmat)));
   Vinv = inv(V);
   for (i in 1:61) {
-    row(Vinv, i) = row(Vinv, i) .* D;
+    Vinv[i] = Vinv[i] .* D;
   }
 }
 
@@ -338,11 +338,10 @@ model {
   
     m_AA = dot_product(row(V, A), col(Vinv, A));
     if (m_AA < 1e-6) {
-      m_Ai = 1e-6;
+      m_AA = 1e-6;
     }
+    //print("m_AA[", i, "] = ", m_AA);
     for (i in 1:61){
-      //print("m_Ai[", i, "] = ", m_Ai);
-      //print("m_AA[", i, "] = ", m_AA);
       
       if (A == i){
         alpha_Ai[A,i] = 1;
@@ -352,6 +351,7 @@ model {
         if (m_Ai < 1e-6) {
           m_Ai = 1e-6;
         }
+        //print("m_Ai[", i, "] = ", m_Ai);
 
         alpha_Ai[A,i] = m_Ai/m_AA;
       }
