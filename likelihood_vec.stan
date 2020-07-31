@@ -2,6 +2,7 @@ functions {
   // substitution rate matrix
 	matrix PDRM(real mu, real kappa, real omega) {
 	  matrix[61,61] M;
+	  vector[61] pi;
 	  int r1[31];
 	  int r2[138];
 	  int r3[58];
@@ -11,6 +12,7 @@ functions {
 	  int c3[58];
 	  int c4[36];
 	  
+	  pi=rep_vector(0.0163934426229508, 61);
 	  M = rep_matrix(0.,61,61);
 	  
 	  r1 = {1,3,3,4,5,7,9,11,14,16,18,20,22,24,26,28,30,34,36,38,40,42,44,46,48,50,52,54,56,58,60};
@@ -41,6 +43,13 @@ functions {
     
     // Fill in the lower triangle
     M = M'+ M;
+    
+    //Apply the equilibrium frequencies
+    for (i in 1:61){
+      for (j in 1:61){
+        M[i,j] = M[i,j] * pi[j]; 
+      }
+    }
   
     // Compute the diagonal
     for (i in 1:61){
