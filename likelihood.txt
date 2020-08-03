@@ -1,0 +1,19 @@
+#!/bin/sh
+#PBS -l walltime=23:59:00
+#PBS -l select=1:ncpus=2:ompthreads=2:mem=4gb
+#PBS -j oe
+#PBS -J 1-2
+
+module load anaconda3/personal
+condacreate –n Renv
+source activate Renv
+conda install -c r r-rstan
+
+case $PBS_ARRAY_INDEX in
+1)
+Rscript stan_chain1.R
+;;
+2)
+Rscript stan_chain2.R
+;;
+esac
