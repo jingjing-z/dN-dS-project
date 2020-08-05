@@ -272,8 +272,12 @@ functions {
     M[60,61] = kappa*mu;
     
     // Fill in the lower triangle
-    M = M'+ M;
-    
+    //M = M'+ M;
+    for (i in 2:61) {
+      for (j in 1:(i-1)) {
+        M[j, i] = M[i, j];
+      }
+    }
     
     for (i in 1:61) {
       M[i] .*= equilibrium; 
