@@ -287,7 +287,7 @@ functions {
     for (i in 1:61){
       M[i, i] = -sum(row(M, i));
     }
-    print("m =  ", m);
+    print("M =  ", M);
     return(M);
   }
   
@@ -302,9 +302,9 @@ data {
 
 
 parameters {
-  #real<lower=0> mu;
-  #real<lower=0> omega;
-  #real<lower=0> kappa;
+  // real<lower=0> mu;
+  // real<lower=0> omega;
+  // real<lower=0> kappa;
   real<lower=0> fake;
 }
 
