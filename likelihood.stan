@@ -313,7 +313,7 @@ parameters {
 model {
   matrix[61,61] mutmat;
   matrix[61,61] V; //eigenvectors
-  matrix[61,61] Vinv;
+  matrix[61,61] VD;
   row_vector[61] D; //eigenvalues transformed to -> 1/1-Dkk
   
   matrix[61,61] alpha_Ai;
@@ -338,15 +338,15 @@ model {
   mutmat = PDRM(mu, kappa, omega, pi);
   V = eigenvectors_sym(mutmat);
   D = to_row_vector(inv(1-eigenvalues_sym(mutmat)));
-  Vinv = inv(V);
+  VD = V;
   for (i in 1:61) {
-    Vinv[i] .*= D;
+    VD[i] .*= D;
   }
   
   for (A in 1:61){
     lik = 0;
   
-    m_AA = dot_product(row(V, A), col(Vinv, A));
+    m_AA = dot_product(row(V, A), row(VD, A));
     if (m_AA < 1e-6) {
       m_AA = 1e-6;
     }
@@ -356,7 +356,7 @@ model {
       if (A == i){
         alpha_Ai[A,i] = 1;
       } else {
-        m_Ai = dot_product(row(V, A), col(Vinv, i));
+        m_Ai = dot_product(row(V, A), row(VD, i));
         
         if (m_Ai < 1e-6) {
           m_Ai = 1e-6;
