@@ -274,7 +274,7 @@ functions {
     // Fill in the lower triangle
     //M = M'+ M;
     for (i in 1:61) {
-      for (j in i+1:(i-1)) {
+      for (j in (i+1):61) {
         M[j, i] = M[i, j];
       }
     }
