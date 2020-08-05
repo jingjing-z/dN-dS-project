@@ -132,22 +132,27 @@ seqs <- transcribe(data)
 #tri <- translate(seqs)
 tripletNames_noSTO <- tripletNames[-c(11, 12, 15)]
 
-count <- as.data.frame(table(seqs))
-order <- match(tripletNames_noSTO, count$seqs)
+position <- 12
+count <- as.data.frame(table(seqs[,position]))
+order <- match(tripletNames_noSTO, count$Var1)
 x <- count$Freq[order]
 x[is.na(x)] <- 0
 n <- sum(x)
 pi <- rep(0.0163934426229508, 61)
 
 #####
-warmup  <- 1e3
-iter    <- 10e3
+warmup  <- 100
+iter    <- 200
+chains  <- 4
 
+options(mc.cores = chains)
 file.stanmodel  <- file.path('likelihood.stan')
 fit     <- stan(    file.stanmodel, 
                     data=list(x=x,n=n,pi=pi), 
                     warmup=warmup, 
                     iter=iter, 
-                    chains=2,
+                    chains=chains,
                     control = list(adapt_delta = 0.999)
 )
+saveRDS(fit, "new_fit.codon12.Rds")
+

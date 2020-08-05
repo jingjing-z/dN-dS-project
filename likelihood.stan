@@ -1,8 +1,10 @@
 functions {
   // substitution rate matrix
-	matrix PDRM(real mu, real kappa, real omega) {
+	matrix PDRM(real mu, real kappa, real omega, vector pi) {
 	  matrix[61,61] M;
+	  row_vector[61] equilibrium;
 	  
+	  equilibrium = to_row_vector(pi);
 	  M = rep_matrix(0.,61,61);
 	  
     M[1,2] = kappa*mu;
@@ -271,6 +273,11 @@ functions {
     
     // Fill in the lower triangle
     M = M'+ M;
+    
+    
+    for (i in 1:61) {
+      M[i] .*= equilibrium; 
+    }
   
     // Compute the diagonal
     for (i in 1:61){
@@ -304,12 +311,12 @@ transformed parameters {
   matrix[61,61] Vinv;
   row_vector[61] D; //eigenvalues transformed to -> 1/1-Dkk
   
-  mutmat = PDRM(mu, kappa, omega);
+  mutmat = PDRM(mu, kappa, omega, pi);
   V = eigenvectors_sym(mutmat);
   D = to_row_vector(inv(1-eigenvalues_sym(mutmat)));
   Vinv = inv(V);
   for (i in 1:61) {
-    Vinv[i] = Vinv[i] .* D;
+    Vinv[i] .*= D;
   }
 }
 
