@@ -305,27 +305,17 @@ parameters {
 }
 
 
-transformed parameters {
+
+model {
   matrix[61,61] mutmat;
   matrix[61,61] V; //eigenvectors
   matrix[61,61] Vinv;
   row_vector[61] D; //eigenvalues transformed to -> 1/1-Dkk
   
-  mutmat = PDRM(mu, kappa, omega, pi);
-  V = eigenvectors_sym(mutmat);
-  D = to_row_vector(inv(1-eigenvalues_sym(mutmat)));
-  Vinv = inv(V);
-  for (i in 1:61) {
-    Vinv[i] .*= D;
-  }
-}
-
-
-
-model {
   matrix[61,61] alpha_Ai;
   vector[61] alpha_A;
   vector[61] lik_full;
+  
   real lik;
   real m_Ai;
   real m_AA;
@@ -339,6 +329,15 @@ model {
   alpha_Ai = rep_matrix(0.,61,61);
   alpha_A = rep_vector(0.,61);
   lik_full = rep_vector(0.,61);
+  
+  // transforms
+  mutmat = PDRM(mu, kappa, omega, pi);
+  V = eigenvectors_sym(mutmat);
+  D = to_row_vector(inv(1-eigenvalues_sym(mutmat)));
+  Vinv = inv(V);
+  for (i in 1:61) {
+    Vinv[i] .*= D;
+  }
   
   for (A in 1:61){
     lik = 0;
