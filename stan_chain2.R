@@ -86,46 +86,11 @@ aminoAcids = names(table(unlist(geneticCode)))
 oneLetterAminoAcids = names(table(unlist(oneLetterCodes)))
 tripletNames = names(geneticCode)
 
+
 transcribe = function(x) {
   y = t(sapply(1:nrow(x),function(i) totriplet(x[i,])))
   rownames(y) = rownames(x)
   return(y)
-}
-translate = function(x,oneLetter=FALSE) {
-  x = toupper(x)
-  tr = t(apply(x,1,function(y)sapply(y,function(i) {aa=geneticCode[[i]];ifelse(is.null(aa),"---",aa)} )))
-  if(oneLetter) tr = t(apply(tr,1,function(y) oneLetterCodes[y]))
-  rownames(tr) = rownames(x)
-  return(tr)
-}
-view.nucleotide = function(x) {
-  image(0:ncol(x),0:nrow(x),t(matrix(as.numeric(factor(x,levels=c("-","A","G","C","T"))),nrow=nrow(x))),col=c("white","red","green","yellow","blue"))
-}
-view.codon = function(x) {
-  image(0:ncol(x),0:nrow(x),t(matrix(as.numeric(factor(x),levels=tripletNames),nrow=nrow(x))),col=rainbow(20))
-}
-view.protein = function(x,oneLetter=FALSE) {
-  levs = aminoAcids
-  if(oneLetter) levs = oneLetterAminoAcids
-  cols = rainbow(20)
-  if(oneLetter) cols = c("white",cols)
-  image(0:ncol(x),0:nrow(x),t(matrix(as.numeric(factor(x,levels=levs)),nrow=nrow(x))),col=cols)
-}
-# Assumes a fasta file representing a single genome, possibly split across contigs
-read.fasta.ref = function(ref_file) {
-  r = scan(ref_file,what=character(0),sep="\n")
-  beg = substr(r,1,1)
-  gd = beg!=">"
-  rcat = paste(r[gd],collapse="")
-  return(toupper(unlist(strsplit(rcat,""))))
-}
-# Assumes a fasta file representing a single genome, possibly split across contigs
-read.fasta.ref.contig = function(ref_file) {
-  r = scan(ref_file,what=character(0),sep="\n")
-  beg = substr(r,1,1)
-  gd = beg!=">"
-  contig = rep(cumsum(!gd)[gd],times=nchar(r[gd]))
-  return(contig)
 }
 
 
@@ -136,7 +101,8 @@ seqs <- transcribe(data)
 # tri <- translate(seqs)
 tripletNames_noSTO <- tripletNames[-c(11, 12, 15)]
 
-count <- as.data.frame(table(seqs[,12]))
+position <- 12
+count <- as.data.frame(table(seqs[,position]))
 order <- match(tripletNames_noSTO, count$Var1)
 x <- count$Freq[order]
 x[is.na(x)] <- 0
@@ -157,3 +123,4 @@ fit     <- stan(    file.stanmodel,
                     chain_id=2,
                     control=list(adapt_delta = 0.999)
 )
+saveRDS(fit, 'stan_fit2.rds')
