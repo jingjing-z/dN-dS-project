@@ -1,10 +1,10 @@
 functions {
   // substitution rate matrix
-	matrix PDRM(real mu, real kappa, real omega) {
+	matrix PDRM(real mu, real kappa, real omega, vector pi) {
 	  matrix[61,61] M;
-	  vector[61] pi;
+	  row_vector[61] equilibrium;
 	  
-	  pi=rep_vector(0.0163934426229508, 61);
+	  equilibrium = to_row_vector(pi);
 	  M = rep_matrix(0.,61,61);
 	  
     M[1,2] = kappa*mu;
@@ -272,13 +272,15 @@ functions {
     M[60,61] = kappa*mu;
     
     // Fill in the lower triangle
-    M = M'+ M;
-    
-    //Apply the equilibrium frequencies
-    for (i in 1:61){
-      for (j in 1:61){
-        M[i,j] = M[i,j] * pi[j]; 
+    //M = M'+ M;
+    for (i in 1:61) {
+      for (j in (i+1):61) {
+        M[j, i] = M[i, j];
       }
+    }
+    
+    for (i in 1:61) {
+      M[i] .*= equilibrium; 
     }
   
     // Compute the diagonal
@@ -307,26 +309,17 @@ parameters {
 }
 
 
-transformed parameters {
-  matrix[61,61] mutmat;
-  matrix[61,61] V; //eigenvectors
-  matrix[61,61] Vinv;
-  vector[61] D; //eigenvalues transformed to -> 1/1-Dkk
-  
-  mutmat = PDRM(mu, kappa, omega);
-  V = eigenvectors_sym(mutmat);
-  D = inv(1-eigenvalues_sym(mutmat));
-  Vinv = inv(V);
-  for (i in 1:61) {
-    Vinv[i] = Vinv[i] * D[i];
-  }
-}
-
 
 model {
+  matrix[61,61] mutmat;
+  matrix[61,61] V; //eigenvectors
+  matrix[61,61] VD;
+  row_vector[61] D; //eigenvalues transformed to -> 1/1-Dkk
+  
   matrix[61,61] alpha_Ai;
   vector[61] alpha_A;
   vector[61] lik_full;
+  
   real lik;
   real m_Ai;
   real m_AA;
@@ -341,25 +334,34 @@ model {
   alpha_A = rep_vector(0.,61);
   lik_full = rep_vector(0.,61);
   
+  // transforms
+  mutmat = PDRM(mu, kappa, omega, pi);
+  V = eigenvectors_sym(mutmat);
+  D = to_row_vector(inv(1-eigenvalues_sym(mutmat)));
+  VD = V;
+  for (i in 1:61) {
+    VD[i] .*= D;
+  }
+  
   for (A in 1:61){
     lik = 0;
   
-    m_AA = dot_product(row(V, A), col(Vinv, A));
+    m_AA = dot_product(row(V, A), row(VD, A));
     if (m_AA < 1e-6) {
       m_AA = 1e-6;
     }
+    //print("m_AA[", i, "] = ", m_AA);
     for (i in 1:61){
-      //print("m_Ai[", i, "] = ", m_Ai);
-      //print("m_AA[", i, "] = ", m_AA);
       
       if (A == i){
         alpha_Ai[A,i] = 1;
       } else {
-        m_Ai = dot_product(row(V, A), col(Vinv, i));
+        m_Ai = dot_product(row(V, A), row(VD, i));
         
         if (m_Ai < 1e-6) {
           m_Ai = 1e-6;
         }
+        //print("m_Ai[", i, "] = ", m_Ai);
 
         alpha_Ai[A,i] = m_Ai/m_AA;
       }
