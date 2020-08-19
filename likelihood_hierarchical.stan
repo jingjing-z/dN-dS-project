@@ -294,18 +294,20 @@ functions {
 }
 
 data {
-  vector[61] x; // number of times allele j be counted
-  int<lower=0> n; // sum of total number of times
+  int<lower=0> l; // length of the gene
+  matrix[61, l] X; // number of times allele j be counted
+  vector[l] n; // sum of total number of times
   vector[61] pi;
   
 }
 
 
 parameters {
-  real<lower=0> mu;
-  real<lower=0> omega;
-  real<lower=0> kappa;
-  
+  vector[l] mu;
+  vector[l] omega;
+  vector[l] kappa;
+  vector[l] kappa_mu;
+  vector[l] kappa_sigma;
 }
 
 
@@ -324,26 +326,28 @@ model {
   real m_Ai;
   real m_AA;
   
-  // transforms
-  mutmat = PDRM(mu, kappa, omega, pi);
-  V = eigenvectors_sym(mutmat);
-  D = to_row_vector(inv(1-eigenvalues_sym(mutmat)));
-  VD = V;
-  for (i in 1:61) {
-    VD[i] .*= D;
-  }
   
   // make the model fully hierarchical
-  for (H in 1:n){
+  for (H in 1:l){
     // priors
-    target += lognormal_lpdf( kappa | 1, 1.25 );
+    target += lognormal_lpdf( kappa | kappa_mu, kappa_sigma );
     target += exponential_lpdf( omega | 1 );
     target += exponential_lpdf( mu | 0.7 );
+    target += 
   
     // likelihood
     alpha_Ai = rep_matrix(0.,61,61);
     alpha_A = rep_vector(0.,61);
     lik_full = rep_vector(0.,61);
+    
+    // transforms
+    mutmat = PDRM(mu, kappa, omega, pi);
+    V = eigenvectors_sym(mutmat);
+    D = to_row_vector(inv(1-eigenvalues_sym(mutmat)));
+    VD = V;
+    for (i in 1:61) {
+    VD[i] .*= D;
+    }
     
     for (A in 1:61){
     lik = 0;
@@ -367,11 +371,11 @@ model {
 
         alpha_Ai[A,i] = m_Ai/m_AA;
       }
-      lik += lgamma(x[i]+alpha_Ai[A,i]) - lgamma(alpha_Ai[A,i]) - lgamma(x[i]+1);
+      lik += lgamma(X[H,i]+alpha_Ai[A,i]) - lgamma(alpha_Ai[A,i]) - lgamma(X[H,i]+1);
     }
   
     alpha_A[A] = sum(alpha_Ai[A,]);
-    lik_full[A] = lik + lgamma(alpha_A[A]) - lgamma(n+alpha_A[A]) + lgamma(n+1); 
+    lik_full[A] = lik + lgamma(alpha_A[A]) - lgamma(n+alpha_A[A]) + lgamma(n[H]+1); 
   }
   target += log_sum_exp(lik_full + log(pi));
  }
