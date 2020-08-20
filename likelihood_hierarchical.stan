@@ -348,7 +348,7 @@ model {
     lik_full = rep_vector(0.,61);
     
     // transforms
-    kappa[H] = exp( log_kappa_popmean + log_kappa_rnde[H])
+    kappa[H] = exp( log_kappa_popmean + log_kappa_rnde[H]);
     
     mutmat = PDRM(mu[H], kappa[H], omega[H], pi);
     V = eigenvectors_sym(mutmat);
