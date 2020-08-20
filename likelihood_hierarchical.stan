@@ -330,7 +330,7 @@ model {
   
   
   // make the model fully hierarchical
-  for (H in 1:l){
+  
     // priors
     target += lognormal_lpdf( kappa[H] | 1, 1.25 );
     target += exponential_lpdf( omega[H] | 1 );
@@ -385,5 +385,5 @@ model {
   target += log_sum_exp(lik_full + log(pi));
  }
     
-}
+
   
