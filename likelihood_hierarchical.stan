@@ -1,6 +1,6 @@
 functions {
   // substitution rate matrix
-	matrix PDRM(vecotr mu, vector kappa, vector omega, vector pi) {
+	matrix PDRM(vector mu, vector kappa, vector omega, vector pi) {
 	  matrix[61,61] M;
 	  row_vector[61] equilibrium;
 	  
