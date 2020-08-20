@@ -295,7 +295,7 @@ functions {
 
 data {
   int<lower=0> l; // length of the gene
-  matrix[61, l] X; // number of times allele j be counted
+  matrix[l,61] X; // number of times allele j be counted
   vector[l] n; // sum of total number of times
   vector[61] pi;
   
@@ -306,8 +306,10 @@ parameters {
   vector[l] mu;
   vector[l] omega;
   vector[l] kappa;
-  vector[l] kappa_mu;
-  vector[l] kappa_sigma;
+  //real mu_mean;
+  //real omega_mean;
+  real kappa_mean;
+  real kappa_sd;
 }
 
 
@@ -330,10 +332,13 @@ model {
   // make the model fully hierarchical
   for (H in 1:l){
     // priors
-    target += lognormal_lpdf( kappa | kappa_mu, kappa_sigma );
+    target += lognormal_lpdf( kappa | kappa_mean, kappa_sd );
     target += exponential_lpdf( omega | 1 );
     target += exponential_lpdf( mu | 0.7 );
-    target += 
+    target += normal_lpdf( kappa_mean | 0, 1);
+    target += cauchy_lpdf (kappa_sd | 0, 1);
+    //target += uniform_lpdf ()
+    //target += 
   
     // likelihood
     alpha_Ai = rep_matrix(0.,61,61);
