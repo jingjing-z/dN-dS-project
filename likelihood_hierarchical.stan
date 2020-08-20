@@ -306,10 +306,11 @@ parameters {
   vector<lower=0>[l] mu;
   vector<lower=0>[l] omega;
   vector<lower=0>[l] kappa;
-  //real mu_mean;
-  //real omega_mean;
-  //real kappa_mean;
-  //real kappa_sd;
+  
+  vector<lower=0>[l] omega_popsd;
+  real<lower=0> log_kappa_popmean;
+  real<lower=0> omega_mean;
+  vector<lower=0>[l] log_kappa_popsd;
 }
 
 
@@ -330,15 +331,16 @@ model {
   
   
   // make the model fully hierarchical
-  
+    for (H in 1:l){
     // priors
-    target += lognormal_lpdf( kappa| 1, 1.25 );
-    target += exponential_lpdf( omega | 1 );
+    target += normal_lpdf( log_kappa_popmean | 0, 1 );
+    target += exponential_lpdf( log_kappa_popsd | 10 );
+    target += normal_lpdf( log_kappa_rnde[H] | 0, log_kappa_popsd);
+    
+    target += normal_lpdf( omega[H] | 0, omega_popsd );
+    target += cauchy_lpdf( omega_popsd | 0, 1)
+    
     target += exponential_lpdf( mu | 0.7 );
-    //target += lognormal_lpdf( kappa_mean | 0, 1.25);
-    //target += cauchy_lpdf (kappa_sd | 0, 1);
-    //target += uniform_lpdf ()
-    //target += 
   
     // likelihood
     alpha_Ai = rep_matrix(0.,61,61);
@@ -346,7 +348,9 @@ model {
     lik_full = rep_vector(0.,61);
     
     // transforms
-    mutmat = PDRM(mu, kappa, omega, pi);
+    kappa[H] = exp( log_kappa_popmean + log_kappa_rnde[H])
+    
+    mutmat = PDRM(mu[H], kappa[H], omega[H], pi);
     V = eigenvectors_sym(mutmat);
     D = to_row_vector(inv(1-eigenvalues_sym(mutmat)));
     VD = V;
@@ -376,14 +380,14 @@ model {
 
         alpha_Ai[A,i] = m_Ai/m_AA;
       }
-      lik += lgamma(X[i]+alpha_Ai[A,i]) - lgamma(alpha_Ai[A,i]) - lgamma(X[i]+1);
+      lik += lgamma(X[H,i]+alpha_Ai[A,i]) - lgamma(alpha_Ai[A,i]) - lgamma(X[H,i]+1);
     }
   
     alpha_A[A] = sum(alpha_Ai[A,]);
-    lik_full[A] = lik + lgamma(alpha_A[A]) - lgamma(n+alpha_A[A]) + lgamma(n+1); 
+    lik_full[A] = lik + lgamma(alpha_A[A]) - lgamma(n[H]+alpha_A[A]) + lgamma(n[H]+1); 
   }
   target += log_sum_exp(lik_full + log(pi));
  }
     
-
+}
   
