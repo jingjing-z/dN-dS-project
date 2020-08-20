@@ -303,9 +303,9 @@ data {
 
 
 parameters {
-  vector[l] mu;
-  vector[l] omega;
-  vector[l] kappa;
+  vector<lower=0>[l] mu;
+  vector<lower=0>[l] omega;
+  vector<lower=0>[l] kappa;
   //real mu_mean;
   //real omega_mean;
   //real kappa_mean;
