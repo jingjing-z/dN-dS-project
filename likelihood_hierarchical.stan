@@ -305,7 +305,7 @@ data {
 parameters {
   vector<lower=0>[l] mu;
   vector<lower=0>[l] omega;
-  vector<lower=0>[l] kappa;
+  //vector<lower=0>[l] kappa;
   
   vector<lower=0>[l] omega_popsd;
   real<lower=0> log_kappa_popmean;
