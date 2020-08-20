@@ -305,12 +305,15 @@ data {
 parameters {
   vector<lower=0>[l] mu;
   vector<lower=0>[l] omega;
-  //vector<lower=0>[l] kappa;
+  vector<lower=0>[l] kappa;
   
-  vector<lower=0>[l] omega_popsd;
-  real<lower=0> log_kappa_popmean;
-  real<lower=0> log_kappa_popsd;
-  vector<lower=0>[l] log_kappa_rnde;
+  real<lower=0>[l] omega_popmean;
+  real<lower=0>[l] omega_popsd;
+  real<lower=0>[l] kappa_popmean;
+  real<lower=0>[l] kappa_popsd;
+  //real<lower=0> log_kappa_popmean;
+  //real<lower=0> log_kappa_popsd;
+  //vector<lower=0>[l] log_kappa_rnde;
 }
 
 
@@ -335,11 +338,17 @@ model {
   // make the model fully hierarchical
     for (H in 1:l){
     // priors
-    target += normal_lpdf( log_kappa_popmean | 0, 1 );
-    target += exponential_lpdf( log_kappa_popsd | 10 );
-    target += normal_lpdf( log_kappa_rnde[H] | 0, log_kappa_popsd);
+    
+    //target += normal_lpdf( log_kappa_popmean | 0, 1 );
+    //target += exponential_lpdf( log_kappa_popsd | 10 );
+    //target += normal_lpdf( log_kappa_rnde[H] | 0, log_kappa_popsd);
+    
+    target += normal_lpdf( kappa[H] | kappa_popmean, kappa_popsd );
+    target += normal_lpdf( kappa_popmean | 0, 5);
+    target += cauchy_lpdf( kappa_popsd | 0, 1);
     
     target += normal_lpdf( omega[H] | 0, omega_popsd );
+    target += normal_lpdf( omega_popmean | 0, 5);
     target += cauchy_lpdf( omega_popsd | 0, 1);
     
     target += exponential_lpdf( mu | 0.7 );
@@ -350,7 +359,8 @@ model {
     lik_full = rep_vector(0.,61);
     
     // transforms
-    kappa[H] = exp( log_kappa_popmean + log_kappa_rnde[H]);
+    
+    //appa[H] = exp( log_kappa_popmean + log_kappa_rnde[H]);
     
     mutmat = PDRM(mu[H], kappa[H], omega[H], pi);
     V = eigenvectors_sym(mutmat);
