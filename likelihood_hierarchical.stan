@@ -338,7 +338,7 @@ model {
     target += normal_lpdf( log_kappa_rnde[H] | 0, log_kappa_popsd);
     
     target += normal_lpdf( omega[H] | 0, omega_popsd );
-    target += cauchy_lpdf( omega_popsd | 0, 1)
+    target += cauchy_lpdf( omega_popsd | 0, 1);
     
     target += exponential_lpdf( mu | 0.7 );
   
