@@ -345,11 +345,11 @@ model {
     //target += normal_lpdf( log_kappa_rnde[H] | 0, log_kappa_popsd);
     
     target += normal_lpdf( kappa[H] | kappa_popmean, kappa_popsd );
-    target += normal_lpdf( kappa_popmean | 0, 5);
+    target += normal_lpdf( kappa_popmean | 0, 1);
     target += cauchy_lpdf( kappa_popsd | 0, 1);
     
     target += normal_lpdf( omega[H] | omega_popmean, omega_popsd );
-    target += normal_lpdf( omega_popmean | 0, 5);
+    target += normal_lpdf( omega_popmean | 0, 1);
     target += cauchy_lpdf( omega_popsd | 0, 1);
     
     target += exponential_lpdf( mu | 0.7 );
