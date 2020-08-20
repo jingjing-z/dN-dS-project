@@ -321,6 +321,8 @@ model {
   matrix[61,61] VD;
   row_vector[61] D; //eigenvalues transformed to -> 1/1-Dkk
   
+  vector<lower=0>[l] kappa
+  
   matrix[61,61] alpha_Ai;
   vector[61] alpha_A;
   vector[61] lik_full;
