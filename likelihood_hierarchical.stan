@@ -1,6 +1,6 @@
 functions {
   // substitution rate matrix
-	matrix PDRM(vector mu, vector kappa, vector omega, vector pi) {
+	matrix PDRM(real mu, real kappa, real omega, vector pi) {
 	  matrix[61,61] M;
 	  row_vector[61] equilibrium;
 	  
@@ -376,11 +376,11 @@ model {
 
         alpha_Ai[A,i] = m_Ai/m_AA;
       }
-      lik += lgamma(X[H,i]+alpha_Ai[A,i]) - lgamma(alpha_Ai[A,i]) - lgamma(X[H,i]+1);
+      lik += lgamma(X[i]+alpha_Ai[A,i]) - lgamma(alpha_Ai[A,i]) - lgamma(X[i]+1);
     }
   
     alpha_A[A] = sum(alpha_Ai[A,]);
-    lik_full[A] = lik + lgamma(alpha_A[A]) - lgamma(n[H]+alpha_A[A]) + lgamma(n[H]+1); 
+    lik_full[A] = lik + lgamma(alpha_A[A]) - lgamma(n+alpha_A[A]) + lgamma(n+1); 
   }
   target += log_sum_exp(lik_full + log(pi));
  }
