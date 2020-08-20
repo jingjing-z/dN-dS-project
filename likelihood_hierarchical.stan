@@ -332,9 +332,9 @@ model {
   // make the model fully hierarchical
   
     // priors
-    target += lognormal_lpdf( kappa[H] | 1, 1.25 );
-    target += exponential_lpdf( omega[H] | 1 );
-    target += exponential_lpdf( mu[H] | 0.7 );
+    target += lognormal_lpdf( kappa| 1, 1.25 );
+    target += exponential_lpdf( omega | 1 );
+    target += exponential_lpdf( mu | 0.7 );
     //target += lognormal_lpdf( kappa_mean | 0, 1.25);
     //target += cauchy_lpdf (kappa_sd | 0, 1);
     //target += uniform_lpdf ()
@@ -346,7 +346,7 @@ model {
     lik_full = rep_vector(0.,61);
     
     // transforms
-    mutmat = PDRM(mu[H], kappa[H], omega[H], pi);
+    mutmat = PDRM(mu, kappa, omega, pi);
     V = eigenvectors_sym(mutmat);
     D = to_row_vector(inv(1-eigenvalues_sym(mutmat)));
     VD = V;
