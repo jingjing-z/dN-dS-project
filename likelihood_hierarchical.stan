@@ -335,7 +335,7 @@ model {
     target += lognormal_lpdf( kappa | kappa_mean, kappa_sd );
     target += exponential_lpdf( omega | 1 );
     target += exponential_lpdf( mu | 0.7 );
-    target += normal_lpdf( kappa_mean | 0, 1);
+    target += lognormal_lpdf( kappa_mean | 0, 1.25);
     target += cauchy_lpdf (kappa_sd | 0, 1);
     //target += uniform_lpdf ()
     //target += 
