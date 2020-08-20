@@ -332,7 +332,7 @@ model {
   // make the model fully hierarchical
   for (H in 1:l){
     // priors
-    target += lognormal_lpdf( kappa | 1, 1.25 );
+    target += normal_lpdf( kappa | 1, 1.25 );
     target += exponential_lpdf( omega | 1 );
     target += exponential_lpdf( mu | 0.7 );
     //target += lognormal_lpdf( kappa_mean | 0, 1.25);
