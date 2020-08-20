@@ -346,7 +346,7 @@ model {
     lik_full = rep_vector(0.,61);
     
     // transforms
-    mutmat = PDRM(mu, kappa, omega, pi);
+    mutmat = PDRM(mu[H], kappa[H], omega[H], pi);
     V = eigenvectors_sym(mutmat);
     D = to_row_vector(inv(1-eigenvalues_sym(mutmat)));
     VD = V;
