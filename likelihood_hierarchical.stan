@@ -380,7 +380,7 @@ model {
     }
   
     alpha_A[A] = sum(alpha_Ai[A,]);
-    lik_full[A] = lik + lgamma(alpha_A[A]) - lgamma(n+alpha_A[A]) + lgamma(n[H]+1); 
+    lik_full[A] = lik + lgamma(alpha_A[A]) - lgamma(n[H]+alpha_A[A]) + lgamma(n[H]+1); 
   }
   target += log_sum_exp(lik_full + log(pi));
  }
