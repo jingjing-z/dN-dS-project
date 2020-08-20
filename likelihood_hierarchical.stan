@@ -324,7 +324,7 @@ model {
   matrix[61,61] VD;
   row_vector[61] D; //eigenvalues transformed to -> 1/1-Dkk
   
-  vector<lower=0>[l] kappa
+  //vector<lower=0>[l] kappa
   
   matrix[61,61] alpha_Ai;
   vector[61] alpha_A;
@@ -360,7 +360,7 @@ model {
     
     // transforms
     
-    //appa[H] = exp( log_kappa_popmean + log_kappa_rnde[H]);
+    //kappa[H] = exp( log_kappa_popmean + log_kappa_rnde[H]);
     
     mutmat = PDRM(mu[H], kappa[H], omega[H], pi);
     V = eigenvectors_sym(mutmat);
