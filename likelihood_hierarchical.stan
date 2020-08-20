@@ -307,10 +307,10 @@ parameters {
   vector<lower=0>[l] omega;
   vector<lower=0>[l] kappa;
   
-  real<lower=0>[l] omega_popmean;
-  real<lower=0>[l] omega_popsd;
-  real<lower=0>[l] kappa_popmean;
-  real<lower=0>[l] kappa_popsd;
+  real<lower=0> omega_popmean;
+  real<lower=0> omega_popsd;
+  real<lower=0> kappa_popmean;
+  real<lower=0> kappa_popsd;
   //real<lower=0> log_kappa_popmean;
   //real<lower=0> log_kappa_popsd;
   //vector<lower=0>[l] log_kappa_rnde;
