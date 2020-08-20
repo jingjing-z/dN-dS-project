@@ -307,10 +307,11 @@ parameters {
   vector<lower=0>[l] omega;
   vector<lower=0>[l] kappa;
   
-  real<lower=0> omega_popmean;
-  real<lower=0> omega_popsd;
-  real<lower=0> kappa_popmean;
-  real<lower=0> kappa_popsd;
+  //real<lower=0> omega_popmean;
+  //real<lower=0> omega_popsd;
+  //real<lower=0> kappa_popmean;
+  //real<lower=0> kappa_popsd;
+  
   //real<lower=0> log_kappa_popmean;
   //real<lower=0> log_kappa_popsd;
   //vector<lower=0>[l] log_kappa_rnde;
@@ -343,13 +344,13 @@ model {
     //target += exponential_lpdf( log_kappa_popsd | 10 );
     //target += normal_lpdf( log_kappa_rnde[H] | 0, log_kappa_popsd);
     
-    target += normal_lpdf( kappa[H] | kappa_popmean, kappa_popsd );
-    target += normal_lpdf( kappa_popmean | 0, 5);
-    target += cauchy_lpdf( kappa_popsd | 0, 1);
+    target += normal_lpdf( kappa[H] | 0, 1 );
+    //target += normal_lpdf( kappa_popmean | 0, 5);
+    //target += cauchy_lpdf( kappa_popsd | 0, 1);
     
-    target += normal_lpdf( omega[H] | 0, omega_popsd );
-    target += normal_lpdf( omega_popmean | 0, 5);
-    target += cauchy_lpdf( omega_popsd | 0, 1);
+    target += normal_lpdf( omega[H] | 0, 1 );
+    //target += normal_lpdf( omega_popmean | 0, 5);
+    //target += cauchy_lpdf( omega_popsd | 0, 1);
     
     target += exponential_lpdf( mu | 0.7 );
   
