@@ -350,9 +350,9 @@ model {
   
     for (H in 1:l){
     // priors
-    target += normal_lpdf( log_kappa_rnde[H] | 0, log_kappa_popsd[H] );
+    target += normal_lpdf( log_kappa_rnde[H] | 0, log_kappa_popsd );
     
-    target += normal_lpdf( log_omega_rnde[H] | 0, log_omega_popsd[H] );
+    target += normal_lpdf( log_omega_rnde[H] | 0, log_omega_popsd );
     //target += exponential_lpdf( omega[H] | 1)
     
     target += exponential_lpdf( mu[H] | 1 );
