@@ -280,7 +280,7 @@ functions {
     }
     
     for (i in 1:61) {
-      M[,i] .*= equilibrium[i]; 
+      M[,i] .*= equilibrium; 
     }
   
     // Compute the diagonal
@@ -361,7 +361,7 @@ model {
     D = to_row_vector(inv(1-eigenvalues_sym(mutmat)));
     VD = V;
     for (i in 1:61) {
-      VD[i,] .*= D[i];
+      VD[i,] .*= D;
     }
   
     // likelihood
