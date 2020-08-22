@@ -280,7 +280,7 @@ functions {
     }
     
     for (i in 1:61) {
-      M[i] .*= equilibrium; 
+      M[,i] .*= equilibrium; 
     }
   
     // Compute the diagonal
@@ -342,18 +342,20 @@ model {
   // make the model fully hierarchical
   
   //hyperpriors
-  target += normal_lpdf( log_kappa_rnde | 0, log_kappa_popsd);
-  target += normal_lpdf( log_omega_rnde | 0, log_omega_popsd);
+  log_kappa_popmean ~ N(0,1); 
+  log_kappa_popsd ~ Exp(10);
+  
+  log_omega_popmean ~ N(0,1); 
+  log_omega_popsd ~ Exp(10);
   
     for (H in 1:l){
     // priors
-    target += normal_lpdf( log_kappa_popmean | 0, 1 );
-    target += exponential_lpdf( log_kappa_popsd | 10 );
+    target += normal_lpdf( log_kappa_rnde[H] | 0, log_kappa_popsd[H] );
     
-    target += normal_lpdf( log_omega_popmean | 0, 1 );
-    target += exponential_lpdf( log_omega_popsd | 10 );
+    target += normal_lpdf( log_omega_rnde[H] | 0, log_omega_popsd[H] );
+    //target += exponential_lpdf( omega[H] | 1)
     
-    target += exponential_lpdf( mu | 0.7 );
+    target += exponential_lpdf( mu[H] | 1 );
     
     // transforms
     mutmat = PDRM(mu[H], kappa[H], omega[H], pi);
