@@ -280,7 +280,7 @@ functions {
     }
     
     for (i in 1:61) {
-      M[,i] .*= equilibrium; 
+      M[i] .*= equilibrium; 
     }
   
     // Compute the diagonal
