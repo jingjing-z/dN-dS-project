@@ -303,8 +303,7 @@ data {
 
 
 parameters {
-  vector<lower=0>[l] kappa;
-  vector<lower=0>[l] omega;
+  
   vector<lower=0>[l] mu;
   
   real<lower=0> log_kappa_popmean;
@@ -317,6 +316,9 @@ parameters {
 }
 
 transformed parameters{
+  vector<lower=0>[l] kappa;
+  vector<lower=0>[l] omega;
+  
   kappa = exp( log_kappa_popmean + log_kappa_rnde);
   omega = exp( log_omega_popmean + log_omega_rnde);
 }
