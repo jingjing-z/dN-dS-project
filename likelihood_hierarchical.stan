@@ -342,11 +342,11 @@ model {
   // make the model fully hierarchical
   
   //hyperpriors
-  log_kappa_popmean ~ N(0,1); 
-  log_kappa_popsd ~ Exp(10);
+  log_kappa_popmean ~ normal(0,1); 
+  log_kappa_popsd ~ exp(10);
   
-  log_omega_popmean ~ N(0,1); 
-  log_omega_popsd ~ Exp(10);
+  log_omega_popmean ~ normal(0,1); 
+  log_omega_popsd ~ exp(10);
   
     for (H in 1:l){
     // priors
