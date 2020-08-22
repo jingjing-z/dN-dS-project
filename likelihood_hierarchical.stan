@@ -303,24 +303,24 @@ data {
 
 
 parameters {
-  
+  vector<lower=0>[l] omega;
   vector<lower=0>[l] mu;
   
   real<lower=0> log_kappa_popmean;
   real<lower=0> log_kappa_popsd;
   vector<lower=0>[l] log_kappa_rnde;
   
-  real<lower=0> log_omega_popmean;
-  real<lower=0> log_omega_popsd;
-  vector<lower=0>[l] log_omega_rnde;
+  //real<lower=0> log_omega_popmean;
+  //real<lower=0> log_omega_popsd;
+  //vector<lower=0>[l] log_omega_rnde;
 }
 
 transformed parameters{
   vector<lower=0>[l] kappa;
-  vector<lower=0>[l] omega;
+  //vector<lower=0>[l] omega;
   
   kappa = exp( log_kappa_popmean + log_kappa_rnde);
-  omega = exp( log_omega_popmean + log_omega_rnde);
+  //omega = exp( log_omega_popmean + log_omega_rnde);
 }
 
 
@@ -343,17 +343,17 @@ model {
   
   //hyperpriors
   log_kappa_popmean ~ normal(0,1); 
-  log_kappa_popsd ~ exponential(10);
+  log_kappa_popsd ~ exponential(5);
   
-  log_omega_popmean ~ normal(0,1); 
-  log_omega_popsd ~ exponential(10);
+  //log_omega_popmean ~ normal(0,1); 
+  //log_omega_popsd ~ exponential(10);
   
     for (H in 1:l){
     // priors
     target += normal_lpdf( log_kappa_rnde[H] | 0, log_kappa_popsd );
     
-    target += normal_lpdf( log_omega_rnde[H] | 0, log_omega_popsd );
-    //target += exponential_lpdf( omega[H] | 1)
+    //target += normal_lpdf( log_omega_rnde[H] | 0, log_omega_popsd );
+    target += exponential_lpdf( omega[H] | 1)
     
     target += exponential_lpdf( mu[H] | 1 );
     
@@ -364,7 +364,9 @@ model {
     VD = V;
     for (i in 1:61) {
       VD[i] .*= D;
+      print("VD[", i, "] = ", VD);
     }
+    
   
     // likelihood
     alpha_Ai = rep_matrix(0.,61,61);
