@@ -303,20 +303,23 @@ data {
 
 
 parameters {
-  vector<lower=0>[l] mu;
-  vector<lower=0>[l] omega;
   vector<lower=0>[l] kappa;
+  vector<lower=0>[l] omega;
+  vector<lower=0>[l] mu;
   
-  real<lower=0> omega_popmean;
-  real<lower=0> omega_popsd;
-  real<lower=0> kappa_popmean;
-  real<lower=0> kappa_popsd;
+  real<lower=0> log_kappa_popmean;
+  real<lower=0> log_kappa_popsd;
+  vector<lower=0>[l] log_kappa_rnde;
   
-  //real<lower=0> log_kappa_popmean;
-  //real<lower=0> log_kappa_popsd;
-  //vector<lower=0>[l] log_kappa_rnde;
+  real<lower=0> log_omega_popmean;
+  real<lower=0> log_omega_popsd;
+  vector<lower=0>[l] log_omega_rnde;
 }
 
+transformed parameters{
+  kappa = exp( log_kappa_popmean + log_kappa_rnde);
+  omega = exp( log_omega_popmean + log_omega_rnde);
+}
 
 
 model {
@@ -324,8 +327,6 @@ model {
   matrix[61,61] V; //eigenvectors
   matrix[61,61] VD;
   row_vector[61] D; //eigenvalues transformed to -> 1/1-Dkk
-  
-  //vector<lower=0>[l] kappa
   
   matrix[61,61] alpha_Ai;
   vector[61] alpha_A;
@@ -337,39 +338,34 @@ model {
   
   
   // make the model fully hierarchical
+  
+  //hyperpriors
+  target += normal_lpdf( log_kappa_rnde[H] | 0, log_kappa_popsd);
+  target += normal_lpdf( log_omega_rnde[H] | 0, log_omega_popsd);
+  
     for (H in 1:l){
     // priors
+    target += normal_lpdf( log_kappa_popmean | 0, 1 );
+    target += exponential_lpdf( log_kappa_popsd | 10 );
     
-    //target += normal_lpdf( log_kappa_popmean | 0, 1 );
-    //target += exponential_lpdf( log_kappa_popsd | 10 );
-    //target += normal_lpdf( log_kappa_rnde[H] | 0, log_kappa_popsd);
-    
-    target += normal_lpdf( kappa[H] | kappa_popmean, kappa_popsd );
-    target += normal_lpdf( kappa_popmean | 0, 1);
-    target += cauchy_lpdf( kappa_popsd | 0, 1);
-    
-    target += normal_lpdf( omega[H] | omega_popmean, omega_popsd );
-    target += normal_lpdf( omega_popmean | 0, 1);
-    target += cauchy_lpdf( omega_popsd | 0, 1);
+    target += normal_lpdf( log_omega_popmean | 0, 1 );
+    target += exponential_lpdf( log_omega_popsd | 10 );
     
     target += exponential_lpdf( mu | 0.7 );
-  
-    // likelihood
-    alpha_Ai = rep_matrix(0.,61,61);
-    alpha_A = rep_vector(0.,61);
-    lik_full = rep_vector(0.,61);
     
     // transforms
-    
-    //kappa[H] = exp( log_kappa_popmean + log_kappa_rnde[H]);
-    
     mutmat = PDRM(mu[H], kappa[H], omega[H], pi);
     V = eigenvectors_sym(mutmat);
     D = to_row_vector(inv(1-eigenvalues_sym(mutmat)));
     VD = V;
     for (i in 1:61) {
-    VD[i] .*= D;
+      VD[i] .*= D;
     }
+  
+    // likelihood
+    alpha_Ai = rep_matrix(0.,61,61);
+    alpha_A = rep_vector(0.,61);
+    lik_full = rep_vector(0.,61);
     
     for (A in 1:61){
     lik = 0;
