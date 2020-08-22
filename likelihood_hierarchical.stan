@@ -364,7 +364,6 @@ model {
     VD = V;
     for (i in 1:61) {
       VD[i] .*= D;
-      print("VD[", i, "] = ", VD);
     }
     
   
