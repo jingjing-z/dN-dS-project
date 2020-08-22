@@ -342,8 +342,8 @@ model {
   // make the model fully hierarchical
   
   //hyperpriors
-  target += normal_lpdf( log_kappa_rnde[H] | 0, log_kappa_popsd);
-  target += normal_lpdf( log_omega_rnde[H] | 0, log_omega_popsd);
+  target += normal_lpdf( log_kappa_rnde | 0, log_kappa_popsd);
+  target += normal_lpdf( log_omega_rnde | 0, log_omega_popsd);
   
     for (H in 1:l){
     // priors
