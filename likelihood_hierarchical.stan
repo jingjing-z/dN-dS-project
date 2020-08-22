@@ -343,10 +343,10 @@ model {
   
   //hyperpriors
   log_kappa_popmean ~ normal(0,1); 
-  log_kappa_popsd ~ exp(10);
+  log_kappa_popsd ~ exponential(10);
   
   log_omega_popmean ~ normal(0,1); 
-  log_omega_popsd ~ exp(10);
+  log_omega_popsd ~ exponential(10);
   
     for (H in 1:l){
     // priors
