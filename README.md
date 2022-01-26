@@ -1,1 +1,1 @@
-# 2020-MSc-Summer-project-Jingjing
+# dN/dS project
