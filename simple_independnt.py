@@ -1,335 +1,342 @@
-import numpy as np
-# import pandas as pd
+import argparse
+import os
+
+import jax
+import jax.numpy as jnp
+import jax.random as random
+from jax.scipy.special import logsumexp
+from jax.lax import lgamma
+
 import numpyro
 import numpyro.distributions as dist
-from scipy.stats import loggamma
-from scipy.special import logsumexp
-from numpyro.infer import HMC, HMCECS, MCMC, NUTS
-from jax import random
-import jax.numpy as jnp
+from numpyro.infer import HMC, MCMC, NUTS, SA, Predictive, log_likelihood
 
 def substitution_rate_matrix(mu, kappa, omega, pi):
-    M = np.zeros((61, 61))
-    M[0, 1] = kappa * mu
-    M[0, 2] = omega * mu
-    M[0, 3] = omega * mu
-    M[0, 4] = kappa * omega * mu
-    M[0, 8] = omega * mu
-    M[0, 10] = omega * mu
-    M[0, 13] = kappa * omega * mu
-    M[0, 29] = omega * mu
-    M[0, 45] = omega * mu
-    M[1, 2] = omega * mu
-    M[1, 3] = omega * mu
-    M[1, 5] = kappa * omega * mu
-    M[1, 9] = omega * mu
-    M[1, 11] = omega * mu
-    M[1, 14] = kappa * omega * mu
-    M[1, 30] = omega * mu
-    M[1, 46] = omega * mu
-    M[2, 3] = kappa * mu
-    M[2, 6] = kappa * omega * mu
-    M[2, 15] = kappa * mu
-    M[2, 31] = omega * mu
-    M[2, 47] = omega * mu
-    M[3, 7] = kappa * omega * mu
-    M[3, 12] = omega * mu
-    M[3, 16] = kappa * mu
-    M[3, 32] = omega * mu
-    M[3, 48] = omega * mu
-    M[4, 5] = kappa * mu
-    M[4, 6] = mu
-    M[4, 7] = mu
-    M[4, 8] = omega * mu
-    M[4, 10] = omega * mu
-    M[4, 17] = kappa * omega * mu
-    M[4, 33] = omega * mu
-    M[4, 49] = omega * mu
-    M[5, 6] = mu
-    M[5, 7] = mu
-    M[5, 9] = omega * mu
-    M[5, 11] = omega * mu
-    M[5, 18] = kappa * omega * mu
-    M[5, 34] = omega * mu
-    M[5, 50] = omega * mu
-    M[6, 7] = kappa * mu
-    M[6, 19] = kappa * omega * mu
-    M[6, 35] = omega * mu
-    M[6, 51] = omega * mu
-    M[7, 12] = omega * mu
-    M[7, 20] = kappa * omega * mu
-    M[7, 36] = omega * mu
-    M[7, 52] = omega * mu
-    M[8, 9] = kappa * mu
-    M[8, 10] = kappa * omega * mu
-    M[8, 21] = kappa * omega * mu
-    M[8, 37] = omega * mu
-    M[8, 53] = omega * mu
-    M[9, 11] = kappa * omega * mu
-    M[9, 22] = kappa * omega * mu
-    M[9, 38] = omega * mu
-    M[9, 54] = omega * mu
-    M[10, 11] = kappa * mu
-    M[10, 12] = omega * mu
-    M[10, 25] = kappa * omega * mu
-    M[10, 41] = omega * mu
-    M[10, 57] = omega * mu
-    M[11, 12] = omega * mu
-    M[11, 26] = kappa * omega * mu
-    M[11, 42] = omega * mu
-    M[11, 58] = omega * mu
-    M[12, 28] = kappa * omega * mu
-    M[12, 44] = omega * mu
-    M[12, 60] = omega * mu
-    M[13, 14] = kappa * mu
-    M[13, 15] = mu
-    M[13, 16] = mu
-    M[13, 17] = kappa * omega * mu
-    M[13, 21] = omega * mu
-    M[13, 25] = omega * mu
-    M[13, 29] = omega * mu
-    M[13, 45] = omega * mu
-    M[14, 15] = mu
-    M[14, 16] = mu
-    M[14, 18] = kappa * omega * mu
-    M[14, 22] = omega * mu
-    M[14, 26] = omega * mu
-    M[14, 30] = omega * mu
-    M[14, 46] = omega * mu
-    M[15, 16] = kappa * mu
-    M[15, 19] = kappa * omega * mu
-    M[15, 23] = omega * mu
-    M[15, 27] = omega * mu
-    M[15, 31] = omega * mu
-    M[15, 47] = omega * mu
-    M[16, 20] = kappa * omega * mu
-    M[16, 24] = omega * mu
-    M[16, 28] = omega * mu
-    M[16, 32] = omega * mu
-    M[16, 48] = omega * mu
-    M[17, 18] = kappa * mu
-    M[17, 19] = mu
-    M[17, 20] = mu
-    M[17, 21] = omega * mu
-    M[17, 25] = omega * mu
-    M[17, 33] = omega * mu
-    M[17, 49] = omega * mu
-    M[18, 19] = mu
-    M[18, 20] = mu
-    M[18, 22] = omega * mu
-    M[18, 26] = omega * mu
-    M[18, 34] = omega * mu
-    M[18, 50] = omega * mu
-    M[19, 20] = kappa * mu
-    M[19, 23] = omega * mu
-    M[19, 27] = omega * mu
-    M[19, 35] = omega * mu
-    M[19, 51] = omega * mu
-    M[20, 24] = omega * mu
-    M[20, 28] = omega * mu
-    M[20, 36] = omega * mu
-    M[20, 52] = omega * mu
-    M[21, 22] = kappa * mu
-    M[21, 23] = omega * mu
-    M[21, 24] = omega * mu
-    M[21, 25] = kappa * omega * mu
-    M[21, 37] = omega * mu
-    M[21, 53] = omega * mu
-    M[22, 23] = omega * mu
-    M[22, 24] = omega * mu
-    M[22, 26] = kappa * omega * mu
-    M[22, 38] = omega * mu
-    M[22, 54] = omega * mu
-    M[23, 24] = kappa * mu
-    M[23, 27] = kappa * omega * mu
-    M[23, 39] = omega * mu
-    M[23, 55] = omega * mu
-    M[24, 28] = kappa * omega * mu
-    M[24, 40] = omega * mu
-    M[24, 56] = omega * mu
-    M[25, 26] = kappa * mu
-    M[25, 27] = mu
-    M[25, 28] = mu
-    M[25, 41] = omega * mu
-    M[25, 57] = omega * mu
-    M[26, 27] = mu
-    M[26, 28] = mu
-    M[26, 42] = omega * mu
-    M[26, 58] = omega * mu
-    M[27, 28] = kappa * mu
-    M[27, 43] = mu
-    M[27, 59] = omega * mu
-    M[28, 44] = mu
-    M[28, 60] = omega * mu
-    M[29, 30] = kappa * mu
-    M[29, 31] = mu
-    M[29, 32] = omega * mu
-    M[29, 33] = kappa * omega * mu
-    M[29, 37] = omega * mu
-    M[29, 41] = omega * mu
-    M[29, 45] = kappa * omega * mu
-    M[30, 31] = mu
-    M[30, 32] = omega * mu
-    M[30, 34] = kappa * omega * mu
-    M[30, 38] = omega * mu
-    M[30, 42] = omega * mu
-    M[30, 46] = kappa * omega * mu
-    M[31, 32] = kappa * omega * mu
-    M[31, 35] = kappa * omega * mu
-    M[31, 39] = omega * mu
-    M[31, 43] = omega * mu
-    M[31, 47] = kappa * omega * mu
-    M[32, 36] = kappa * omega * mu
-    M[32, 40] = omega * mu
-    M[32, 44] = omega * mu
-    M[32, 48] = kappa * omega * mu
-    M[33, 34] = kappa * mu
-    M[33, 35] = mu
-    M[33, 36] = mu
-    M[33, 37] = omega * mu
-    M[33, 41] = omega * mu
-    M[33, 49] = kappa * omega * mu
-    M[34, 35] = mu
-    M[34, 36] = mu
-    M[34, 38] = omega * mu
-    M[34, 42] = omega * mu
-    M[34, 50] = kappa * omega * mu
-    M[35, 36] = kappa * mu
-    M[35, 39] = omega * mu
-    M[35, 43] = omega * mu
-    M[35, 51] = kappa * omega * mu
-    M[36, 40] = omega * mu
-    M[36, 44] = omega * mu
-    M[36, 52] = kappa * omega * mu
-    M[37, 38] = kappa * mu
-    M[37, 39] = omega * mu
-    M[37, 40] = omega * mu
-    M[37, 41] = kappa * omega * mu
-    M[37, 53] = kappa * omega * mu
-    M[38, 39] = omega * mu
-    M[38, 40] = omega * mu
-    M[38, 42] = kappa * omega * mu
-    M[38, 54] = kappa * omega * mu
-    M[39, 40] = kappa * mu
-    M[39, 43] = kappa * omega * mu
-    M[39, 55] = kappa * omega * mu
-    M[40, 44] = kappa * omega * mu
-    M[40, 56] = kappa * omega * mu
-    M[41, 42] = kappa * mu
-    M[41, 43] = omega * mu
-    M[41, 44] = omega * mu
-    M[41, 57] = kappa * omega * mu
-    M[42, 43] = omega * mu
-    M[42, 44] = omega * mu
-    M[42, 58] = kappa * omega * mu
-    M[43, 44] = kappa * mu
-    M[43, 59] = kappa * omega * mu
-    M[44, 60] = kappa * omega * mu
-    M[45, 46] = kappa * mu
-    M[45, 47] = mu
-    M[45, 48] = mu
-    M[45, 49] = kappa * omega * mu
-    M[45, 53] = omega * mu
-    M[45, 57] = omega * mu
-    M[46, 47] = mu
-    M[46, 48] = mu
-    M[46, 50] = kappa * omega * mu
-    M[46, 54] = omega * mu
-    M[46, 58] = omega * mu
-    M[47, 48] = kappa * mu
-    M[47, 51] = kappa * omega * mu
-    M[47, 55] = omega * mu
-    M[47, 59] = omega * mu
-    M[48, 52] = kappa * omega * mu
-    M[48, 56] = omega * mu
-    M[48, 60] = omega * mu
-    M[49, 50] = kappa * mu
-    M[49, 51] = mu
-    M[49, 52] = mu
-    M[49, 53] = omega * mu
-    M[49, 57] = omega * mu
-    M[50, 51] = mu
-    M[50, 52] = mu
-    M[50, 54] = omega * mu
-    M[50, 58] = omega * mu
-    M[51, 52] = kappa * mu
-    M[51, 55] = omega * mu
-    M[51, 59] = omega * mu
-    M[52, 56] = omega * mu
-    M[52, 60] = omega * mu
-    M[53, 54] = kappa * mu
-    M[53, 55] = omega * mu
-    M[53, 56] = omega * mu
-    M[53, 57] = kappa * omega * mu
-    M[54, 55] = omega * mu
-    M[54, 56] = omega * mu
-    M[54, 58] = kappa * omega * mu
-    M[55, 56] = kappa * mu
-    M[55, 59] = kappa * omega * mu
-    M[56, 60] = kappa * omega * mu
-    M[57, 58] = kappa * mu
-    M[57, 59] = mu
-    M[57, 60] = mu
-    M[58, 59] = mu
-    M[58, 60] = mu
-    M[59, 60] = kappa * mu
+    M = jnp.zeros((61, 61))
+    M = M.at[0, 1].set(kappa * mu)
+    M = M.at[0, 2].set(omega * mu)
+    M = M.at[0, 3].set(omega * mu)
+    M = M.at[0, 4].set(kappa * omega * mu)
+    M = M.at[0, 8].set(omega * mu)
+    M = M.at[0, 10].set(omega * mu)
+    M = M.at[0, 13].set(kappa * omega * mu)
+    M = M.at[0, 29].set(omega * mu)
+    M = M.at[0, 45].set(omega * mu)
+    M = M.at[1, 2].set(omega * mu)
+    M = M.at[1, 3].set(omega * mu)
+    M = M.at[1, 5].set(kappa * omega * mu)
+    M = M.at[1, 9].set(omega * mu)
+    M = M.at[1, 11].set(omega * mu)
+    M = M.at[1, 14].set(kappa * omega * mu)
+    M = M.at[1, 30].set(omega * mu)
+    M = M.at[1, 46].set(omega * mu)
+    M = M.at[2, 3].set(kappa * mu)
+    M = M.at[2, 6].set(kappa * omega * mu)
+    M = M.at[2, 15].set(kappa * mu)
+    M = M.at[2, 31].set(omega * mu)
+    M = M.at[2, 47].set(omega * mu)
+    M = M.at[3, 7].set(kappa * omega * mu)
+    M = M.at[3, 12].set(omega * mu)
+    M = M.at[3, 16].set(kappa * mu)
+    M = M.at[3, 32].set(omega * mu)
+    M = M.at[3, 48].set(omega * mu)
+    M = M.at[4, 5].set(kappa * mu)
+    M = M.at[4, 6].set(mu)
+    M = M.at[4, 7].set(mu)
+    M = M.at[4, 8].set(omega * mu)
+    M = M.at[4, 10].set(omega * mu)
+    M = M.at[4, 17].set(kappa * omega * mu)
+    M = M.at[4, 33].set(omega * mu)
+    M = M.at[4, 49].set(omega * mu)
+    M = M.at[5, 6].set(mu)
+    M = M.at[5, 7].set(mu)
+    M = M.at[5, 9].set(omega * mu)
+    M = M.at[5, 11].set(omega * mu)
+    M = M.at[5, 18].set(kappa * omega * mu)
+    M = M.at[5, 34].set(omega * mu)
+    M = M.at[5, 50].set(omega * mu)
+    M = M.at[6, 7].set(kappa * mu)
+    M = M.at[6, 19].set(kappa * omega * mu)
+    M = M.at[6, 35].set(omega * mu)
+    M = M.at[6, 51].set(omega * mu)
+    M = M.at[7, 12].set(omega * mu)
+    M = M.at[7, 20].set(kappa * omega * mu)
+    M = M.at[7, 36].set(omega * mu)
+    M = M.at[7, 52].set(omega * mu)
+    M = M.at[8, 9].set(kappa * mu)
+    M = M.at[8, 10].set(kappa * omega * mu)
+    M = M.at[8, 21].set(kappa * omega * mu)
+    M = M.at[8, 37].set(omega * mu)
+    M = M.at[8, 53].set(omega * mu)
+    M = M.at[9, 11].set(kappa * omega * mu)
+    M = M.at[9, 22].set(kappa * omega * mu)
+    M = M.at[9, 38].set(omega * mu)
+    M = M.at[9, 54].set(omega * mu)
+    M = M.at[10, 11].set(kappa * mu)
+    M = M.at[10, 12].set(omega * mu)
+    M = M.at[10, 25].set(kappa * omega * mu)
+    M = M.at[10, 41].set(omega * mu)
+    M = M.at[10, 57].set(omega * mu)
+    M = M.at[11, 12].set(omega * mu)
+    M = M.at[11, 26].set(kappa * omega * mu)
+    M = M.at[11, 42].set(omega * mu)
+    M = M.at[11, 58].set(omega * mu)
+    M = M.at[12, 28].set(kappa * omega * mu)
+    M = M.at[12, 44].set(omega * mu)
+    M = M.at[12, 60].set(omega * mu)
+    M = M.at[13, 14].set(kappa * mu)
+    M = M.at[13, 15].set(mu)
+    M = M.at[13, 16].set(mu)
+    M = M.at[13, 17].set(kappa * omega * mu)
+    M = M.at[13, 21].set(omega * mu)
+    M = M.at[13, 25].set(omega * mu)
+    M = M.at[13, 29].set(omega * mu)
+    M = M.at[13, 45].set(omega * mu)
+    M = M.at[14, 15].set(mu)
+    M = M.at[14, 16].set(mu)
+    M = M.at[14, 18].set(kappa * omega * mu)
+    M = M.at[14, 22].set(omega * mu)
+    M = M.at[14, 26].set(omega * mu)
+    M = M.at[14, 30].set(omega * mu)
+    M = M.at[14, 46].set(omega * mu)
+    M = M.at[15, 16].set(kappa * mu)
+    M = M.at[15, 19].set(kappa * omega * mu)
+    M = M.at[15, 23].set(omega * mu)
+    M = M.at[15, 27].set(omega * mu)
+    M = M.at[15, 31].set(omega * mu)
+    M = M.at[15, 47].set(omega * mu)
+    M = M.at[16, 20].set(kappa * omega * mu)
+    M = M.at[16, 24].set(omega * mu)
+    M = M.at[16, 28].set(omega * mu)
+    M = M.at[16, 32].set(omega * mu)
+    M = M.at[16, 48].set(omega * mu)
+    M = M.at[17, 18].set(kappa * mu)
+    M = M.at[17, 19].set(mu)
+    M = M.at[17, 20].set(mu)
+    M = M.at[17, 21].set(omega * mu)
+    M = M.at[17, 25].set(omega * mu)
+    M = M.at[17, 33].set(omega * mu)
+    M = M.at[17, 49].set(omega * mu)
+    M = M.at[18, 19].set(mu)
+    M = M.at[18, 20].set(mu)
+    M = M.at[18, 22].set(omega * mu)
+    M = M.at[18, 26].set(omega * mu)
+    M = M.at[18, 34].set(omega * mu)
+    M = M.at[18, 50].set(omega * mu)
+    M = M.at[19, 20].set(kappa * mu)
+    M = M.at[19, 23].set(omega * mu)
+    M = M.at[19, 27].set(omega * mu)
+    M = M.at[19, 35].set(omega * mu)
+    M = M.at[19, 51].set(omega * mu)
+    M = M.at[20, 24].set(omega * mu)
+    M = M.at[20, 28].set(omega * mu)
+    M = M.at[20, 36].set(omega * mu)
+    M = M.at[20, 52].set(omega * mu)
+    M = M.at[21, 22].set(kappa * mu)
+    M = M.at[21, 23].set(omega * mu)
+    M = M.at[21, 24].set(omega * mu)
+    M = M.at[21, 25].set(kappa * omega * mu)
+    M = M.at[21, 37].set(omega * mu)
+    M = M.at[21, 53].set(omega * mu)
+    M = M.at[22, 23].set(omega * mu)
+    M = M.at[22, 24].set(omega * mu)
+    M = M.at[22, 26].set(kappa * omega * mu)
+    M = M.at[22, 38].set(omega * mu)
+    M = M.at[22, 54].set(omega * mu)
+    M = M.at[23, 24].set(kappa * mu)
+    M = M.at[23, 27].set(kappa * omega * mu)
+    M = M.at[23, 39].set(omega * mu)
+    M = M.at[23, 55].set(omega * mu)
+    M = M.at[24, 28].set(kappa * omega * mu)
+    M = M.at[24, 40].set(omega * mu)
+    M = M.at[24, 56].set(omega * mu)
+    M = M.at[25, 26].set(kappa * mu)
+    M = M.at[25, 27].set(mu)
+    M = M.at[25, 28].set(mu)
+    M = M.at[25, 41].set(omega * mu)
+    M = M.at[25, 57].set(omega * mu)
+    M = M.at[26, 27].set(mu)
+    M = M.at[26, 28].set(mu)
+    M = M.at[26, 42].set(omega * mu)
+    M = M.at[26, 58].set(omega * mu)
+    M = M.at[27, 28].set(kappa * mu)
+    M = M.at[27, 43].set(mu)
+    M = M.at[27, 59].set(omega * mu)
+    M = M.at[28, 44].set(mu)
+    M = M.at[28, 60].set(omega * mu)
+    M = M.at[29, 30].set(kappa * mu)
+    M = M.at[29, 31].set(mu)
+    M = M.at[29, 32].set(omega * mu)
+    M = M.at[29, 33].set(kappa * omega * mu)
+    M = M.at[29, 37].set(omega * mu)
+    M = M.at[29, 41].set(omega * mu)
+    M = M.at[29, 45].set(kappa * omega * mu)
+    M = M.at[30, 31].set(mu)
+    M = M.at[30, 32].set(omega * mu)
+    M = M.at[30, 34].set(kappa * omega * mu)
+    M = M.at[30, 38].set(omega * mu)
+    M = M.at[30, 42].set(omega * mu)
+    M = M.at[30, 46].set(kappa * omega * mu)
+    M = M.at[31, 32].set(kappa * omega * mu)
+    M = M.at[31, 35].set(kappa * omega * mu)
+    M = M.at[31, 39].set(omega * mu)
+    M = M.at[31, 43].set(omega * mu)
+    M = M.at[31, 47].set(kappa * omega * mu)
+    M = M.at[32, 36].set(kappa * omega * mu)
+    M = M.at[32, 40].set(omega * mu)
+    M = M.at[32, 44].set(omega * mu)
+    M = M.at[32, 48].set(kappa * omega * mu)
+    M = M.at[33, 34].set(kappa * mu)
+    M = M.at[33, 35].set(mu)
+    M = M.at[33, 36].set(mu)
+    M = M.at[33, 37].set(omega * mu)
+    M = M.at[33, 41].set(omega * mu)
+    M = M.at[33, 49].set(kappa * omega * mu)
+    M = M.at[34, 35].set(mu)
+    M = M.at[34, 36].set(mu)
+    M = M.at[34, 38].set(omega * mu)
+    M = M.at[34, 42].set(omega * mu)
+    M = M.at[34, 50].set(kappa * omega * mu)
+    M = M.at[35, 36].set(kappa * mu)
+    M = M.at[35, 39].set(omega * mu)
+    M = M.at[35, 43].set(omega * mu)
+    M = M.at[35, 51].set(kappa * omega * mu)
+    M = M.at[36, 40].set(omega * mu)
+    M = M.at[36, 44].set(omega * mu)
+    M = M.at[36, 52].set(kappa * omega * mu)
+    M = M.at[37, 38].set(kappa * mu)
+    M = M.at[37, 39].set(omega * mu)
+    M = M.at[37, 40].set(omega * mu)
+    M = M.at[37, 41].set(kappa * omega * mu)
+    M = M.at[37, 53].set(kappa * omega * mu)
+    M = M.at[38, 39].set(omega * mu)
+    M = M.at[38, 40].set(omega * mu)
+    M = M.at[38, 42].set(kappa * omega * mu)
+    M = M.at[38, 54].set(kappa * omega * mu)
+    M = M.at[39, 40].set(kappa * mu)
+    M = M.at[39, 43].set(kappa * omega * mu)
+    M = M.at[39, 55].set(kappa * omega * mu)
+    M = M.at[40, 44].set(kappa * omega * mu)
+    M = M.at[40, 56].set(kappa * omega * mu)
+    M = M.at[41, 42].set(kappa * mu)
+    M = M.at[41, 43].set(omega * mu)
+    M = M.at[41, 44].set(omega * mu)
+    M = M.at[41, 57].set(kappa * omega * mu)
+    M = M.at[42, 43].set(omega * mu)
+    M = M.at[42, 44].set(omega * mu)
+    M = M.at[42, 58].set(kappa * omega * mu)
+    M = M.at[43, 44].set(kappa * mu)
+    M = M.at[43, 59].set(kappa * omega * mu)
+    M = M.at[44, 60].set(kappa * omega * mu)
+    M = M.at[45, 46].set(kappa * mu)
+    M = M.at[45, 47].set(mu)
+    M = M.at[45, 48].set(mu)
+    M = M.at[45, 49].set(kappa * omega * mu)
+    M = M.at[45, 53].set(omega * mu)
+    M = M.at[45, 57].set(omega * mu)
+    M = M.at[46, 47].set(mu)
+    M = M.at[46, 48].set(mu)
+    M = M.at[46, 50].set(kappa * omega * mu)
+    M = M.at[46, 54].set(omega * mu)
+    M = M.at[46, 58].set(omega * mu)
+    M = M.at[47, 48].set(kappa * mu)
+    M = M.at[47, 51].set(kappa * omega * mu)
+    M = M.at[47, 55].set(omega * mu)
+    M = M.at[47, 59].set(omega * mu)
+    M = M.at[48, 52].set(kappa * omega * mu)
+    M = M.at[48, 56].set(omega * mu)
+    M = M.at[48, 60].set(omega * mu)
+    M = M.at[49, 50].set(kappa * mu)
+    M = M.at[49, 51].set(mu)
+    M = M.at[49, 52].set(mu)
+    M = M.at[49, 53].set(omega * mu)
+    M = M.at[49, 57].set(omega * mu)
+    M = M.at[50, 51].set(mu)
+    M = M.at[50, 52].set(mu)
+    M = M.at[50, 54].set(omega * mu)
+    M = M.at[50, 58].set(omega * mu)
+    M = M.at[51, 52].set(kappa * mu)
+    M = M.at[51, 55].set(omega * mu)
+    M = M.at[51, 59].set(omega * mu)
+    M = M.at[52, 56].set(omega * mu)
+    M = M.at[52, 60].set(omega * mu)
+    M = M.at[53, 54].set(kappa * mu)
+    M = M.at[53, 55].set(omega * mu)
+    M = M.at[53, 56].set(omega * mu)
+    M = M.at[53, 57].set(kappa * omega * mu)
+    M = M.at[54, 55].set(omega * mu)
+    M = M.at[54, 56].set(omega * mu)
+    M = M.at[54, 58].set(kappa * omega * mu)
+    M = M.at[55, 56].set(kappa * mu)
+    M = M.at[55, 59].set(kappa * omega * mu)
+    M = M.at[56, 60].set(kappa * omega * mu)
+    M = M.at[57, 58].set(kappa * mu)
+    M = M.at[57, 59].set(mu)
+    M = M.at[57, 60].set(mu)
+    M = M.at[58, 59].set(mu)
+    M = M.at[58, 60].set(mu)
+    M = M.at[59, 60].set(kappa * mu)
 
     for i in range(61):
-        M[i] *= pi
+        # M[i] *= pi
+        M = M.at[i].multiply(pi)
 
     # Fill in the lower triangle
     for i in range(61):
         for j in range(61):
-            M[j, i] = M[i, j]
+            # M[j, i] = M[i, j]
+            M = M.at[j, i].set(M[i, j])
 
     # Compute the diagonal
-    rowsum = np.sum(M, axis=1)
+    rowsum = jnp.sum(M, axis=1)
     for i in range(61):
-        M[i, i] = -rowsum[i]
-
+        # M[i, i] = -rowsum[i]
+        M = M.at[i, i].set(-rowsum[i])
+        
     return M
 
 
 def likelihood(X, n, mu, kappa, omega, pi):
-    D = [0] * 61
-    alpha_Ai = np.zeros((61, 61))
+    alpha_Ai = jnp.zeros((61, 61))
     alpha_A = [0] * 61
     lik_full = [0] * 61
 
     mutmat = substitution_rate_matrix(mu, kappa, omega, pi)
-    a, b = np.linalg.eig(mutmat) # eigenvalues and eigenvectors
+    a, b = jnp.linalg.eig(mutmat) # eigenvalues and eigenvectors
     V = b
     D = [1 / (1-A) for A in a.tolist()]
     VD = V
     for i in range(61):
-        VD[i] *= D
+        # VD[i] *= D
+        VD = VD.at[i].multiply(D)
 
     for A in range(61):
         lik = 0
-        m_AA = np.dot(V[A, :], VD[A, :])
+        m_AA = jnp.dot(V[A, :], VD[A, :])
 
         if m_AA < 1e-6:
             m_AA = 1e-6
 
         for i in range(61):
-            if A==i:
-                alpha_Ai[A, i] = 1
+            if A == i:
+                # alpha_Ai[A, i] = 1
+                alpha_Ai = alpha_Ai.at[A, i].set(1)
             else:
-                m_Ai = np.dot(V[A, :], VD[i, :])
+                m_Ai = jnp.dot(V[A, :], VD[i, :])
 
                 if m_Ai < 1e-6:
                     m_Ai = 1e-6
-                alpha_Ai[A, i] = m_Ai / m_AA
-            lik += loggamma.pdf(X[i] + alpha_Ai[A, i]) - loggamma.pdf(alpha_Ai[A, i]) -\
-                loggamma(X[i] + 1)
+                # alpha_Ai[A, i] = m_Ai / m_AA
+                alpha_Ai = alpha_Ai.at[A, i].set(m_Ai / m_AA)
+            lik += lgamma(X[i] + alpha_Ai[A, i]) - lgamma(alpha_Ai[A, i]) -lgamma(X[i] + 1)
 
-        alpha_A[A] = np.sum(alpha_Ai[A, :])
-        lik_full[A] = lik + loggamma.pdf(alpha_A[A]) - loggamma.pdf(n + alpha_A[A]) +\
-            loggamma(n + 1)
+        # alpha_A[A] = jnp.sum(alpha_Ai[A, :])
+        alpha_A = alpha_A.at[A].set(jnp.sum(alpha_Ai[A, :]))
+        # lik_full[A] = lik + lgamma(alpha_A[A]) - lgamma(n + alpha_A[A]) + lgamma(n + 1)
+        lik_full = lik_full.at[A].set(lik + lgamma(alpha_A[A]) - lgamma(n + alpha_A[A]) + lgamma(n + 1))
+    partial_ll += logsumexp(lik_full + jnp.log(pi))
 
-    partial_ll += logsumexp(lik_full + np.log(pi))
     return partial_ll
-
 
 
 def model(X, n, pi):
@@ -343,6 +350,7 @@ def model(X, n, pi):
     with numpyro.plate('n', n):
         numpyro.sample('obs', likelihood(X, n, kappa, omega, mu, pi))
 
+
 X = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 166, 4723, 0, 0]
 n = 4889
 pi = [1 / 61] * 61
@@ -351,3 +359,5 @@ nuts_kernel = NUTS(model)
 mcmc = MCMC(nuts_kernel, num_warmup=500, num_samples=1000)
 rng_key = random.PRNGKey(0)
 mcmc.run(rng_key, X, n, pi, extra_fields=('potential_energy',))
+
+
