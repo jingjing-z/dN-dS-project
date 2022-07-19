@@ -1,0 +1,64 @@
+---
+title: "Introduction to genomegamap"
+author: "Jingjing Zhao"
+date: "r Sys.Date()"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{my-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width=12, fig.height=8,
+                      echo=TRUE, warning=FALSE, message=FALSE,
+                      tidy=TRUE)
+```
+
+## Libraries
+
+```{r setup}
+library(genomegamap)
+library(cmdstanr)
+library(ggplot2)
+library(ggExtra)
+```
+
+## Loading data
+
+```{r}
+fasta.file.name <- system.file("extdata", "seqs.txt", package = "genomegamap")
+seq.data <- preprocess_raw_data(fasta.file.name)
+```
+
+
+## Running genomegamap
+```{r}
+fit.indep_model <- compile_model('indep_model', seq.data, 123, 1, 1, 10, 10)
+```
+
+
+## Results: Posterior summary statistics
+```{r}
+fit.indep_model$summary()
+```
+
+## Results: Parameters
+```{r}
+omega <- extract_results(fit.indep_model, omega)
+kappa <- extract_results(fit.indep_model, kappa)
+```
+
+
+## Plot 1: marginal distribution of omega and kappa
+```{r}
+plot_marginal <- plot_marginal(omega, kappa)
+```
+
+## Plot 2: codon distribution of a parameter
+```{r}
+plot_codons <- plot_codons(omega)
